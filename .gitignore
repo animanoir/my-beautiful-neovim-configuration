@@ -1,0 +1,27 @@
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos temporales y de respaldo de Vim/Neovim
+*.swp
+*.swo
+*.swn
+*~
+*.bak
+
+# Directorios locales que Neovim/lazy.nvim podrían crear
+plugin/
+.netrwhist
+tags
+
+# Archivos de sesión y vistas
+Session.vim
+*.session
+
+# Logs
+*.log
+
+# Editores / IDEs
+.vscode/
+.idea/
