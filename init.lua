@@ -78,12 +78,10 @@ require("lazy").setup({
     config = function()
       require("nvim-treesitter").setup({
         ensure_installed = {
+          "racket",
           "haskell",
           "lua",
           "markdown",
-          "glsl",
-          "hlsl",
-          "wgsl",
           "gdscript",
           "godot_resource",
           "gdshader",
@@ -114,7 +112,6 @@ require("lazy").setup({
         ensure_installed = {
           "hls",
           "lua_ls",
-          "glsl_analyzer",
           "ts_ls",
           "eslint",
           "html",
@@ -135,6 +132,16 @@ require("lazy").setup({
       if ok then
         capabilities = cmp_lsp.default_capabilities(capabilities)
       end
+      -- Racket
+      vim.lsp.config("racket_langserver", {
+        cmd = {
+          "racket",
+          "--lib",
+          "racket-langserver"
+        },
+        filetypes = { "racket" },
+        capabilities = capabilities,
+      })
 
       -- Clojure
       vim.lsp.config("clojure_lsp", {
@@ -159,10 +166,6 @@ require("lazy").setup({
           },
         },
       })
-      -- Shaders
-      vim.lsp.config("glsl_analyzer", {
-        capabilities = capabilities,
-      })
       -- Lua
       vim.lsp.config("lua_ls", {
         capabilities = capabilities,
@@ -173,7 +176,13 @@ require("lazy").setup({
         },
       })
 
-      vim.lsp.enable({ "hls", "lua_ls", "glsl_analyzer", "gdscript", "clojure_lsp" })
+      vim.lsp.enable({
+        "hls",
+        "lua_ls",
+        "gdscript",
+        "clojure_lsp",
+        "racket_langserver"
+      })
 
       -- Keymaps LSP
       vim.api.nvim_create_autocmd("LspAttach", {
@@ -281,7 +290,7 @@ require("lazy").setup({
   -- My own plugins:
   {
     "Olical/conjure",
-    ft = { "clojure", "fennel", "scheme" },
+    ft = { "clojure", "fennel", "scheme", "racket" },
     init = function()
       -- Avoic conflict with localleader
       vim.g["conjure#mapping#prefix"] = "<localleader>c"
@@ -322,7 +331,6 @@ require("lazy").setup({
     end,
   },
   {
-    { "tikhomirov/vim-glsl",       ft = "glsl" },
     { "echasnovski/mini.pairs",    event = "InsertEnter", opts = {} },
     { "echasnovski/mini.surround", event = "VeryLazy",    opts = {} },
   }
@@ -330,13 +338,6 @@ require("lazy").setup({
 
 vim.filetype.add({
   extension = {
-    vert = "glsl",
-    frag = "glsl",
-    geom = "glsl",
-    tesc = "glsl",
-    tese = "glsl",
-    comp = "glsl",
-    wgsl = "wgsl",
     gd = "gdscript",
     tscn = "gdresource",
     tres = "gdresource",
@@ -345,4 +346,29 @@ vim.filetype.add({
   pattern = {
     ["project%.godot"] = "confini",
   }
+})
+
+-- Let's me execute a Racket file
+vim.keymap.set("n", "<leader>rr", function()
+  local file = vim.fn.expand("%:p")
+  vim.cmd("write")
+  require("toggleterm").exec("racket " .. vim.fn.shellescape(file))
+end, { desc = "Run current Racket file" })
+
+-- Prevents childless Clojure/Racket processes
+vim.api.nvim_create_autocmd("VimLeavePre", {
+  pattern = "*.rkt",
+  callback = function()
+    pcall(vim.cmd, "ConjureClientRacketStdioStop")
+  end,
+})
+
+-- Distinct background for Conjure log buffers
+vim.api.nvim_create_autocmd({ "BufWinEnter", "BufNew" }, {
+  pattern = "conjure-log-*",
+  callback = function()
+    vim.api.nvim_set_hl(0, "ConjureLogNormal", { bg = "#181825" })
+    vim.opt_local.winhighlight =
+    "Normal:ConjureLogNormal,NormalNC:ConjureLogNormal"
+  end,
 })
